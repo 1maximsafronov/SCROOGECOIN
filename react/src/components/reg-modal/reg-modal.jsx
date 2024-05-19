@@ -1,8 +1,26 @@
-import { useEffect, useState } from "react";
-
+import { useState, useEffect } from "react";
+import { useRegistrationMutation } from "../../store/api";
 
 const RegModal = (props) => {
   const [errorMessage, setErrorMessage] = useState('');
+  const [registration, { isSuccess, error }] = useRegistrationMutation();
+
+  useEffect(() => {
+    if (!!error && 'status' in error && error.data) {
+      const { detail } = error.data;
+      if (typeof detail === 'string') {
+        setErrorMessage(detail);
+      } else {
+        setErrorMessage('Ошибка авторизации');
+      }
+    }
+  }, [error])
+
+  useEffect(() => {
+    if (isSuccess) {
+      props.onClose?.()
+    }
+  }, [isSuccess])
 
   const handleFormSubmite = (evt) => {
     evt.preventDefault();
@@ -23,9 +41,9 @@ const RegModal = (props) => {
       name: name.value,
       email: email.value,
       password: password.value,
-      repeatpassword: repeatpassword.value,
     }
 
+    registration(formData);
   }
 
   if (!props.opened) {

@@ -1,17 +1,27 @@
 import { useState, useEffect } from "react";
-import { useSelector, useDispatch } from 'react-redux';
-import { login, selectLoginStatus } from "../../store/user-slicer";
+import { useLoginMutation } from "../../store/api";
 
 const LoginModal = (props) => {
   const [errorMessage, setErrorMessage] = useState('');
-  const dispatch = useDispatch();
-  const loginStatus = useSelector(selectLoginStatus)
+  const [login, { isSuccess, error }] = useLoginMutation();
+
 
   useEffect(() => {
-    if (loginStatus?.status == 'error') {
-      setErrorMessage(loginStatus.message);
+    if (isSuccess) {
+      props.onClose?.()
     }
-  }, [loginStatus?.status])
+  }, [isSuccess])
+
+  useEffect(() => {
+    if (!!error && 'status' in error && error.data) {
+      const { detail } = error.data;
+      if (typeof detail === 'string') {
+        setErrorMessage(detail);
+      } else {
+        setErrorMessage('Ошибка авторизации');
+      }
+    }
+  }, [error])
 
   const handleFormSubmite = (evt) => {
     setErrorMessage('');
@@ -28,11 +38,8 @@ const LoginModal = (props) => {
       return;
     }
 
-    dispatch(login({
-      email: formData.email,
-      password: formData.password
-    }))
 
+    login(formData);
   }
 
   if (!props.opened) {
