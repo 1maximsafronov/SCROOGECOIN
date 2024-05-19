@@ -5,27 +5,40 @@ import DaashboardCategory from "../pages/dashboard-category/dashboard-category";
 import DashboardProfile from "../pages/dashboard-profile/dashboard-profile";
 import Home from "../pages/home/home"
 import { Route, Routes } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { changeStatus, selectStatus } from "../store/app-slicer";
+import { useSelector } from 'react-redux';
+import { useCheckAuthQuery } from "../store/api";
+import ProtectedRoute from "../components/protected-route/protected-route";
+import { selectAuthStatus } from "../store/user-slicer";
 
 function App() {
-  const appStatus = useSelector(selectStatus);
-  const dispatch = useDispatch();
-  console.log(appStatus);
-
-  React.useEffect(() => {
-    dispatch(changeStatus('LOADED'));
-  }, [])
+  const isAuth = useSelector(selectAuthStatus);
+  const { isLoading } = useCheckAuthQuery();
 
   return (
     <div className="app">
       <Routes>
         <Route index element={<Home />} />
         <Route path="dashboard">
-          <Route index element={<DashboardBudget />} />
-          <Route path="budget" element={<DashboardBudget />} />
-          <Route path="category" element={<DaashboardCategory />} />
-          <Route path="profile" element={<DashboardProfile />} />
+          <Route index element={
+            <ProtectedRoute isAuth={isAuth} isAuthLoading={isLoading}>
+              <DashboardBudget />
+            </ProtectedRoute>
+          } />
+          <Route path="budget" element={
+            <ProtectedRoute isAuth={isAuth} isAuthLoading={isLoading}>
+              <DashboardBudget />
+            </ProtectedRoute>
+          } />
+          <Route path="category" element={
+            <ProtectedRoute isAuth={isAuth} isAuthLoading={isLoading}>
+              <DaashboardCategory />
+            </ProtectedRoute>
+          } />
+          <Route path="profile" element={
+            <ProtectedRoute isAuth={isAuth} isAuthLoading={isLoading}>
+              <DashboardProfile />
+            </ProtectedRoute>
+          } />
         </Route>
       </Routes>
     </div>
