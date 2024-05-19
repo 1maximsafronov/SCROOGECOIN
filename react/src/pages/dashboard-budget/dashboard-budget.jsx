@@ -1,7 +1,53 @@
-import DashboardNav from "../../components/dashboard-nav/dashboard-nav";
+import CreateExpenseModal from "../../components/dashboard/create-expense-modal/create-expense-modal.jsx";
+import CreateIncomModal from "../../components/dashboard/create-incom-modal/create-incom-modal.jsx";
+import DashboardNav from "../../components/dashboard/dashboard-nav/dashboard-nav.jsx";
+import { useState } from 'react';
+import { useDeleteTransactionMutation, useGetCategoriesQuery, useGetTransactionsQuery } from "../../store/api.js";
+import { categoryIcon } from "../../conts.js";
 
+// const transactions = [
+//   {
+//     id: 1,
+//     amount: 10000,
+//     date: '',
+//     description: 'Зарплата',
+//     category_id: 0
+//   },
+//   {
+//     id: 2,
+//     amount: -100,
+//     date: '',
+//     description: '',
+//     category_id: 1
+//   },
+//   {
+//     id: 3,
+//     amount: -918,
+//     date: '',
+//     description: 'Степендия',
+//     category_id: 2
+//   },
+// ]
 
 const DashboardBudget = () => {
+  const [openedModal, setOpenedModal] = useState(null);
+  const { data: categories = {}, isLoading, isSuccess } = useGetCategoriesQuery();
+  const [deleteTransaction] = useDeleteTransactionMutation();
+  const { data } = useGetTransactionsQuery();
+  const closeModal = () => setOpenedModal(null);
+
+  const transactionsList = data?.transactions.map((item) => ({
+    ...item,
+    icon: categories[item.category_id]?.icon ?? categoryIcon['income'],
+    description: item.description || categories[item.category_id]?.name || '',
+    amount: item.amount > 0 ? `+${item.amount}` : item.amount,
+  }))
+
+  const totalAmount = data?.transactions.reduce((sum, item) => sum + item.amount, 0);
+
+  const handleDeleteTransaction = (id) => {
+    deleteTransaction({ id })
+  }
 
   return (
     <div className="dashboard">
@@ -10,51 +56,50 @@ const DashboardBudget = () => {
         <div className="dashboard__wrapper">
           <div className="dashboard-budget">
             <div className="dashboard-budget__wrapper">
-              <p className="dashboard-budget__total-amount">150 000</p>
+              <p className="dashboard-budget__total-amount">{totalAmount}</p>
               <div className="dashboard-budget__controls">
-                <a className="dashboard-budget__controls-button" href="dashboard-budget-incom-modal.html">
+                <button className="dashboard-budget__controls-button"
+                  onClick={() => setOpenedModal('create-income-modal')}>
                   Добавить доход
-                </a>
-                <a className="dashboard-budget__controls-button dashboard-budget__controls-button--orange" href="dashboard-budget-expenses-modal.html">
+                </button>
+                <button className="dashboard-budget__controls-button dashboard-budget__controls-button--orange"
+                  onClick={() => setOpenedModal('create-expense-modal')}>
                   Добавить расходы
-                </a>
+                </button>
               </div>
 
               <div className="dashboard-budget__histoy">
                 <ul className="dashboard-budget__history-list">
-                  <li className="dashboard-budget__history-item">
-                    <span className="dashboard-budget__history-icon"></span>
-                    <p className="dashboard-budget__history__name">
-                      Стипендия
-                    </p>
-                    <p className="dashboard-budget__history-amount">
-                      +5600 P
-                    </p>
-                  </li>
-                  <li className="dashboard-budget__history-item">
-                    <img className="dashboard-budget__history-icon" src="img/category-icons/icon-cart.svg" alt="" />
-                    <p className="dashboard-budget__history__name">
-                      Продукты
-                    </p>
-                    <p className="dashboard-budget__history-amount">
-                      -430 P
-                    </p>
-                  </li>
-                  <li className="dashboard-budget__history-item">
-                    <img className="dashboard-budget__history-icon" src="img/category-icons/icon-fun.svg" alt="" />
-                    <p className="dashboard-budget__history__name">
-                      Развлечения
-                    </p>
-                    <p className="dashboard-budget__history-amount">
-                      -1290 P
-                    </p>
-                  </li>
+                  {transactionsList?.map((item) => (
+                    <li className="dashboard-budget__history-item" key={item.id}>
+                      <img className="dashboard-budget__history-icon" src={item.icon} alt="" />
+                      <p className="dashboard-budget__history__name">
+                        {item.description}
+                      </p>
+                      <p className="dashboard-budget__history-amount">
+                        {item.amount} P
+                      </p>
+                      <button
+                        className="dashboard-budget__history-delete"
+                        onClick={() => handleDeleteTransaction(item.id)}
+                      />
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <CreateExpenseModal
+        opened={openedModal === 'create-expense-modal'}
+        onClose={closeModal}
+      />
+      <CreateIncomModal
+        opened={openedModal === 'create-income-modal'}
+        onClose={closeModal}
+      />
     </div>
   )
 }
