@@ -1,20 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { api } from './api';
+import { dropToken } from './localstorage';
 
 const initialState = {
-  userData: null,
   isAuth: false,
-  // registrationStatus: {
-  //   status: 'error',
-  //   message: 'Registration failed',
-  //   data: null,
-  // },
-  // loginStatus: {
-  //   status: 'error',
-  //   message: 'Login failed',
-  //   data: null,
-  // }
-  registrationStatus: null,
-  loginStatus: null,
 };
 
 
@@ -25,34 +14,34 @@ export const userSlicer = createSlice({
     changeAuthStatus: (state, action) => {
       state.isAuth = action.payload;
     },
-    login: (state, action) => {
-      const { email, password } = action.payload;
-
-      console.log('login', { email, password });
-
-    },
-    registration: (state, action) => {
-      const { name, email, password } = action.payload;
-
-      console.log('registration', { name, email, password });
-    },
     logout: (state) => {
       state.isAuth = false;
-      state.userData = null;
-      console.log('logout');
+      dropToken();
     }
   },
+  extraReducers: (builder) => {
+    builder
+      .addMatcher(api.endpoints.checkAuth.matchFulfilled, (state) => {
+        state.isAuth = true;
+      })
+      .addMatcher(api.endpoints.checkAuth.matchRejected, (state) => {
+        dropToken();
+        state.isAuth = false;
+      })
+      .addMatcher(api.endpoints.login.matchFulfilled, (state) => {
+        state.isAuth = true;
+      })
+      .addMatcher(api.endpoints.login.matchRejected, (state) => {
+        dropToken();
+        state.isAuth = false;
+      })
+  }
 });
 
 
 export const {
   changeAuthStatus,
-  login,
-  registration,
   logout,
 } = userSlicer.actions;
 
 export const selectAuthStatus = (state) => state.USER.isAuth;
-export const selectUserData = (state) => state.USER.userData;
-export const selectRegistrationStatus = (state) => state.USER.registrationStatus;
-export const selectLoginStatus = (state) => state.USER.loginStatus;
